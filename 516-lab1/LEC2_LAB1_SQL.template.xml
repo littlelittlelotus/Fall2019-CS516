@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assignment>
+<item>
+	<id>q1</id>
+	<question>
+		Find the number of action movies that users in Duke love. Same movie can be repeated many times. The zip code of Duke is 27708. If the rating of a movie is greater or equal to 4, we say the user loves the movie. By action movies we mean any movie with the "Action" field set to true.
+		Output headers: number
+		Example output:
+		 number 
+		--------
+		     99
+		(1 row)
+	</question>
+	<sql><![CDATA[
+        SELECT COUNT(DISTINCT R.movie_id) AS number
+        FROM users U, ratings R, movies M
+        WHERE U.user_id = R.user_id AND U.zipcode = '27708' AND R.rating >= 4 AND M.movie_id = R.movie_id AND M."Action" = true;
+	]]></sql>
+    <result>
+        ???
+    </result>
+</item>
+<item>
+	<id>q2</id>
+	<question>
+		Find all user_ids over the age of 68 (age > 68) who gave a rating that is 3.0 or above to a movie that was released in 1997. Return both the user_id and the movie_title.
+		Output headers: user_id, movie_title
+		Example output:
+		 user_id |                     movie_title                      
+		---------+------------------------------------------------------
+		     001 | Ironman (2008)
+		     002 | Ironman 2 (2011)
+		     003 | Thor: Ragnarok (2016)
+		(3 rows)
+	</question>
+	<sql><![CDATA[
+        SELECT U.user_id, M.movie_title
+FROM users U, ratings R, movies M
+WHERE M.release_date LIKE '%1997' AND U.user_id = R.user_id AND U.age > '68' AND R.rating >= 3 AND M.movie_id = R.movie_id
+ORDER BY U.user_id, M.movie_title;
+	]]></sql>
+    <result>
+        ???
+    </result>
+</item>
+<item>
+	<id>q3</id>
+	<question>
+ 		Find distinct user_ids under age 15 who have watched at least 2 different horror movies, ordered by user_id.
+		Output headers: user_id
+		Example output:
+		 user_id 
+		---------
+		     101
+		     102
+		     103
+		(3 rows)
+	</question>
+	<sql><![CDATA[
+        SELECT U.user_id
+        FROM users U, ratings R, movies M
+        WHERE U.user_id = R.user_id AND U.age < '15' AND M.movie_id = R.movie_id AND M."Horror" = true
+        GROUP BY U.user_id
+        HAVING COUNT(U.user_id) > 1
+        ORDER BY U.user_id;
+	]]></sql>
+    <result>
+        ???
+    </result>
+</item>
+</assignment>

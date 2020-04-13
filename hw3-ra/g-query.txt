@@ -1,0 +1,4 @@
+\project_{drinker, bar} (drinker \join_{name=drinker} frequents)
+\diff
+\project_{drinker, bar} (likes \join serves)
+;

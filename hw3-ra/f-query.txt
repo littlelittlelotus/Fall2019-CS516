@@ -1,0 +1,32 @@
+(
+\rename_{bar1, beer1, price1} serves
+\diff
+\project_{bar1, beer1, price1}(
+\rename_{bar1, beer1, price1}  serves
+    \join_{price1 > price2}
+\rename_{bar2, beer2, price2} serves)
+)
+\union
+(
+\rename_{bar1, beer1, price1} serves
+\diff
+(
+\project_{bar1, beer1, price1}
+(
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+\join_{price1 > price3}
+\rename_{bar3, beer3, price3} 
+  (
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+  )
+)
+)
+);

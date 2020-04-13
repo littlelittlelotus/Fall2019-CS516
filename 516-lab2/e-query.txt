@@ -1,0 +1,6 @@
+(\rename_{beer1, bar1}(\project_{beer, bar} (serves \join (\select_{drinker = 'Eve'} likes))))
+\diff
+(\project_{beer1, bar1}
+  (\rename_{bar1, beer1, price1} serves
+    \join_{beer1 = beer2 and price1 < price2}
+  \rename_{bar2, beer2, price2} serves));

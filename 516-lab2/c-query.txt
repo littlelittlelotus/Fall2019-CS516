@@ -1,0 +1,1 @@
+\project_{bar} \select_{price<2.75} (serves \join \select_{drinker = 'Amy'} likes);

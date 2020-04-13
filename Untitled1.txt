@@ -1,0 +1,461 @@
+WITH t1 AS(SELECT COUNT(*) AS num_journals, MIN(year) AS decade
+FROM article
+WHERE year >= 1950 AND year <2020 
+GROUP BY FLOOR(year/10)),
+t2 AS(SELECT COUNT(*) AS num_confs, MIN(year) AS decade
+FROM inproceedings
+WHERE year >= 1950 AND year <2020 
+GROUP BY FLOOR(year/10))
+SELECT t1.decade, t1.num_journals, t2.num_confs
+FROM t1, t2
+WHERE t1.decade/10=t2.decade/10
+
+
+
+SELECT REGR_SLOPE(Y,year) as slope
+FROM article2
+
+
+//v1
+
+WITH t_author AS (
+	SELECT area, (year-year%10) AS decade, author
+	FROM authorship2 au, inproceedings2 ip 
+	WHERE au.pubkey = ip.pubkey AND ip.area!='UNKNOWN'
+), t1 AS (
+	SELECT DISTINCT t_a.area, decade, a1.author AS au1, a2.author AS au2
+	FROM authorship2 a1, authorship2 a2, article2 ar, t_author t_a
+	WHERE ar.pubkey = a1.pubkey AND ar.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND t_a.author = a1.author AND decade>=1950
+	UNION
+	SELECT DISTINCT t_a.area, decade, a1.author AS au1, a2.author AS au2
+	FROM authorship2 a1, authorship2 a2, inproceedings2 ip2, t_author t_a
+	WHERE ip2.pubkey = a1.pubkey AND ip2.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND t_a.author = a1.author AND decade>=1950 
+),t2 AS (
+	SELECT DISTINCT area, decade, au1
+	from t1
+), t3 AS(
+	SELECT area, decade, COUNT(*) AS p_count
+	FROM t2
+	GROUP BY area, decade
+), t4 AS(	
+	SELECT area, decade, COUNT(*) AS tot_count
+	FROM t1
+	GROUP BY area, decade
+)	SELECT t3.decade, t3.area, (CAST(tot_count AS FLOAT)/ CAST(p_count AS FLOAT)) AS avgcollab
+	FROM t3, t4
+	WHERE t3.area= t4.area AND t3.decade = t4.decade
+
+
+
+
+//v2
+
+WITH t_author AS (
+	SELECT area, (year-year%10) AS decade, author
+	FROM authorship2 au, inproceedings2 ip 
+	WHERE au.pubkey = ip.pubkey AND ip.area!='UNKNOWN'
+), t0 AS (
+	SELECT DISTINCT (year-year%10) AS decade, a1.author AS au1, a2.author AS au2
+	FROM authorship2 a1, authorship2 a2, article2 ar
+	WHERE ar.pubkey = a1.pubkey AND ar.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND ar.year>=1950
+	UNION
+	SELECT DISTINCT (year-year%10) AS decade, a1.author AS au1, a2.author AS au2
+	FROM authorship2 a1, authorship2 a2, inproceedings2 ip2
+	WHERE ip2.pubkey = a1.pubkey AND ip2.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND ip2.year>=1950 
+), t1 AS (
+	SELECT area, t0.decade, au1, au2
+	FROM t0, t_author
+	WHERE t0.au1 = t_author.author AND t0.decade = t_author.decade
+)
+,t2 AS (
+	SELECT DISTINCT area, decade, au1
+	from t1
+), t3 AS(
+	SELECT area, decade, COUNT(*) AS p_count
+	FROM t2
+	GROUP BY area, decade
+), t4 AS(	
+	SELECT area, decade, COUNT(*) AS tot_count
+	FROM t1
+	GROUP BY area, decade
+)	SELECT t3.decade, t3.area, (CAST(tot_count AS FLOAT)/ CAST(p_count AS FLOAT)) AS avgcollab
+	FROM t3, t4
+	WHERE t3.area= t4.area AND t3.decade = t4.decade
+
+
+//v3
+WITH t_author AS (
+	SELECT area, (ip.year-ip.year%10) AS decade, author
+	FROM authorship2 au, inproceedings2 ip 
+	WHERE au.pubkey = ip.pubkey 
+), t0 AS (
+	SELECT DISTINCT (ar.year-ar.year%10) AS decade, a1.author AS au1, a2.author AS au2
+	FROM authorship2 a1, authorship2 a2, article2 ar
+	WHERE ar.pubkey = a1.pubkey AND ar.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND ar.year>=1950
+	UNION
+	SELECT DISTINCT (ip2.year-ip2.year%10) AS decade, a1.author AS au1, a2.author AS au2
+	FROM authorship2 a1, authorship2 a2, inproceedings2 ip2
+	WHERE ip2.pubkey = a1.pubkey AND ip2.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND ip2.year>=1950 
+), t1 AS (
+	SELECT area, t0.decade, au1, au2
+	FROM t0, t_author
+	WHERE t0.au1 = t_author.author AND t0.decade = t_author.decade
+)
+,t2 AS (
+	SELECT DISTINCT area, decade, au1
+	from t1
+), t3 AS(
+	SELECT area, decade, COUNT(*) AS p_count
+	FROM t2
+	GROUP BY area, decade
+), t4 AS(	
+	SELECT area, decade, COUNT(*) AS tot_count
+	FROM t1
+	GROUP BY area, decade
+)	SELECT t3.decade, t3.area, (CAST(tot_count AS FLOAT)/ CAST(p_count AS FLOAT)) AS avgcollab
+	FROM t3, t4
+	WHERE t3.area= t4.area AND t3.decade = t4.decade
+
+//v5
+WITH t_author AS (
+	SELECT DISTINCT area, (ip.year-ip.year%10) AS decade, author
+	FROM authorship au, inproceedings ip 
+	WHERE au.pubkey = ip.pubkey 
+), t0 AS (
+	SELECT DISTINCT (ar.year-ar.year%10) AS decade, a1.author AS au1, a2.author AS au2
+	FROM authorship a1, authorship a2, article ar
+	WHERE ar.pubkey = a1.pubkey AND ar.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND ar.year>=1950
+	UNION
+	SELECT DISTINCT (ip2.year-ip2.year%10) AS decade, a1.author AS au1, a2.author AS au2
+	FROM authorship a1, authorship a2, inproceedings ip2
+	WHERE ip2.pubkey = a1.pubkey AND ip2.pubkey = a2.pubkey 
+		AND a1.author != a2.author AND ip2.year>=1950 
+), t1 AS (
+	SELECT area, t0.decade, au1, au2
+	FROM t0, t_author
+	WHERE t0.au1 = t_author.author AND t0.decade = t_author.decade
+)
+,t2 AS (
+	SELECT DISTINCT area, decade, au1
+	from t1
+), t3 AS(
+	SELECT area, decade, COUNT(*) AS p_count
+	FROM t2
+	GROUP BY area, decade
+), t4 AS(	
+	SELECT area, decade, COUNT(*) AS tot_count
+	FROM t1
+	GROUP BY area, decade
+)	SELECT *
+	FROM t1
+
+
+/v1
+WITH cnt_au AS(
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS ac
+	FROM inproceedings ip, authorship au
+	WHERE ip.pubkey = au.pubkey AND area!='UNKNOWN'
+	GROUP BY area, ip.year-ip.year%10
+	),
+	cnt_art AS (
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS tot
+	FROM inproceedings ip
+	WHERE area!='UNKNOWN'	
+	GROUP BY area, ip.year-ip.year%10
+	),
+	slp AS (
+	SELECT cnt_art.area, cnt_art.decade, (CAST(cnt_art.tot AS FLOAT) / CAST(cnt_au.ac AS FLOAT))AS avg_art
+	FROM cnt_art, cnt_au
+	WHERE cnt_art.area = cnt_au.area AND cnt_art.decade = cnt_au.decade
+	)
+SELECT area, REGR_SLOPE(avg_art, decade)
+FROM slp
+GROUP BY area
+
+
+//v2
+WITH cnt_au AS(
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS ac
+	FROM inproceedings ip, authorship au
+	WHERE ip.pubkey = au.pubkey AND area!='UNKNOWN'
+	GROUP BY area, ip.year-ip.year%10
+	),
+	cnt_art AS (
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS tot
+	FROM inproceedings ip
+	WHERE area!='UNKNOWN'	
+	GROUP BY area, ip.year-ip.year%10
+	),
+	slp AS (
+	SELECT cnt_art.area, cnt_art.decade,  (CAST(cnt_au.ac AS FLOAT)/CAST(cnt_art.tot AS FLOAT)) AS avg_art
+	FROM cnt_art, cnt_au
+	WHERE cnt_art.area = cnt_au.area AND cnt_art.decade = cnt_au.decade
+	)
+SELECT area, ((COUNT(*)*SUM(avg_art*decade) - SUM(decade)*SUM(avg_art))/(COUNT(*)*SUM(POWER(decade,2))-POWER(SUM(decade),2)))AS slope
+FROM slp
+GROUP BY area
+
+
+
+//test1
+WITH cnt_au AS(
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS ac
+	FROM inproceedings2 ip, authorship2 au
+	WHERE ip.pubkey = au.pubkey 
+	GROUP BY area, ip.year-ip.year%10
+	),
+	cnt_art AS (
+	SELECT area, ip.year-ip.year%10 AS decade, count(*)+1 AS tot
+	FROM inproceedings2 ip	
+	GROUP BY area, ip.year-ip.year%10
+	),
+	slp AS (
+	SELECT cnt_art.area, cnt_art.decade,  (CAST(cnt_au.ac AS FLOAT)/CAST(cnt_art.tot AS FLOAT)) AS avg_art
+	FROM cnt_art, cnt_au
+	WHERE cnt_art.area = cnt_au.area AND cnt_art.decade = cnt_au.decade
+	)
+SELECT *
+FROM slp
+
+/VF
+WITH cnt_au AS(
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS ac
+	FROM inproceedings ip, authorship au
+	WHERE ip.pubkey = au.pubkey AND area!='UNKNOWN' AND ip.year>=1950
+	GROUP BY area, ip.year-ip.year%10
+	),
+	cnt_art AS (
+	SELECT area, ip.year-ip.year%10 AS decade, count(*) AS tot
+	FROM inproceedings ip
+	WHERE area!='UNKNOWN' AND ip.year>=1950
+	GROUP BY area, ip.year-ip.year%10
+	),
+	slp AS (
+	SELECT cnt_art.area, cnt_art.decade,  (CAST(cnt_au.ac AS FLOAT)/CAST(cnt_art.tot AS FLOAT)) AS avg_art
+	FROM cnt_art, cnt_au
+	WHERE cnt_art.area = cnt_au.area AND cnt_art.decade = cnt_au.decade
+	)
+SELECT area, CAST(((COUNT(*)*SUM(avg_art*decade) - SUM(decade)*SUM(avg_art))/(COUNT(*)*SUM(POWER(decade,2))-POWER(SUM(decade),2)))AS FLOAT)AS slope
+FROM slp
+GROUP BY area
+
+
+
+
+
+
+
+•Durham, 78, cloudy
+
+•Chapel Hill, 78, sunny
+
+•Carrboro, 77, sunny
+
+•Morrisville, 80, cloudy
+
+•Raleigh, 82, rain
+
+•Cary, 81, rain
+
+
+
+
+
+
+f version1: find min
+\rename_{bar1, beer1, price1} serves
+\diff
+\project_{bar1, beer1, price1}(
+\rename_{bar1, beer1, price1}  serves
+    \join_{price1 > price2}
+\rename_{bar2, beer2, price2} serves);
+
+
+
+(
+\rename_{bar1, beer1, price1} serves
+
+\diff
+
+\project_{bar1, beer1, price1}(
+\rename_{bar1, beer1, price1}  serves
+    \join_{price1 > price2}
+\rename_{bar2, beer2, price2} serves)
+
+)
+\union
+
+
+(
+\rename_{bar1, beer1, price1} serves
+
+\diff
+
+(
+\project_{bar1, beer1, price1}
+
+
+(
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+
+
+\join_{price1 > price3}
+
+
+\rename_{bar3, beer3, price3} 
+  (
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+  )
+
+)
+)
+
+)
+
+
+============================================================================
+(
+\rename_{bar1, beer1, price1} serves
+\diff
+\project_{bar1, beer1, price1}(
+\rename_{bar1, beer1, price1}  serves
+    \join_{price1 > price2}
+\rename_{bar2, beer2, price2} serves)
+)
+\union
+(
+\rename_{bar1, beer1, price1} serves
+\diff
+(
+\project_{bar1, beer1, price1}
+(
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+\join_{price1 > price3}
+\rename_{bar3, beer3, price3} 
+  (
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+  )
+)
+)
+);
+
+
+===========================================================================
+
+
+(
+\rename_{bar1, beer1, price1} serves
+
+\diff
+
+\project_{bar1, beer1, price1}(
+\rename_{bar1, beer1, price1}  serves
+    \join_{price1 > price2}
+\rename_{bar2, beer2, price2} serves)
+
+)
+\union
+
+
+(
+\rename_{bar1, beer1, price1} serves
+
+\diff
+
+(
+\project_{bar1, beer1, price1}
+
+
+(
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+
+
+\join_{price1 > price3}
+
+
+\rename_{bar3, beer3, price3} 
+  (
+  \project_{bar1, beer1, price1}(
+    \rename_{bar1, beer1, price1}  serves
+      \join_{price1>price2}
+    \rename_{bar2, beer2, price2} serves
+    )
+  )
+
+)
+)
+
+);
+
+
+
+
+
+h:
+\rename_{drinker}\project_{name} drinker
+
+\diff
+\project_{drinker}(
+
+(
+\project_{drinker, bar} (drinker \join_{name=drinker} frequents)
+\diff
+\project_{drinker, bar} (likes \join serves)
+)
+)
+
+
+;
+
+
+
+i:
+\rename_{drinker}\project_{name} drinker
+
+\diff
+\project_{drinker}(
+
+(
+
+\project_{drinker, bar} (likes \join serves)
+\diff
+\project_{drinker, bar} (drinker \join_{name=drinker} frequents)
+)
+)
+
+
+;
+
+
+
+
+
+
+

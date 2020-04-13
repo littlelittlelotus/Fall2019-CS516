@@ -1,0 +1,38 @@
+\project_{bar} \select_{drinker = 'Eve'} frequents;
+
+
+SELECT (MoreJournal + NoJournal) as authorN
+FROM (SELECT COUNT(*) as MoreJournal
+FROM 
+(SELECT author, COUNT(*) AS JArticle
+FROM article JOIN authorship ON article.pubkey = authorship.pubkey
+GROUP BY author) AS Journal, 
+(SELECT author, COUNT(*) AS CArticle
+FROM inproceedings JOIN authorship ON authorship.pubkey = inproceedings.pubkey
+GROUP BY authorship.author) AS Conference
+WHERE Journal.author = Conference.author AND JArticle > CArticle) as l1,
+(SELECT COUNT(DISTINCT authorship.author) AS NoJournal
+FROM article JOIN authorship ON article.pubkey = authorship.pubkey
+WHERE authorship.author
+NOT IN(
+SELECT DISTINCT authorship.author
+FROM inproceedings JOIN authorship ON inproceedings.pubkey = authorship.pubkey
+)) as l2;
+
+SELECT (moreThan + NoneWriting) as authorN
+FROM (SELECT COUNT(DISTINCT authorship.author) AS NoneWriting
+FROM article JOIN authorship ON article.pubkey = authorship.pubkey
+WHERE authorship.author
+NOT IN(
+SELECT DISTINCT authorship.author
+FROM inproceedings JOIN authorship ON inproceedings.pubkey = authorship.pubkey
+)) as a1,
+(SELECT COUNT(*) as moreThan
+FROM 
+(SELECT author, COUNT(*) AS JournalArticle
+FROM article JOIN authorship ON article.pubkey = authorship.pubkey
+GROUP BY author) AS Journal, 
+(SELECT author, COUNT(*) AS ConferenceArticle
+FROM inproceedings JOIN authorship ON inproceedings.pubkey = authorship.pubkey
+GROUP BY authorship.author) AS Conference
+WHERE Journal.author = Conference.author AND JournalArticle > ConferenceArticle) as a2
